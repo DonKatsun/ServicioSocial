@@ -3,9 +3,11 @@ from app import app
 from flask_sqlalchemy import SQLAlchemy
 from functools import wraps
 import jwt
+import json
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
+from sqlalchemy import exc
 from app.models import *
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
@@ -31,7 +33,8 @@ def login():
         payload = {
             'nombre': f"{usuarioAuth.nombre} {usuarioAuth.apellidop} {usuarioAuth.apellidom}",
             'exp': datetime.utcnow() + timedelta(hours=2),  # Tiempo de expiración del token
-            'rol': rolUsuario.rol
+            'rol': rolUsuario.rol,
+            'id': usuarioAuth.id
         }
         token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
 
@@ -102,7 +105,7 @@ def registroAlumno():
         #Crear la carpeta del alumno
         os.mkdir(ruta_carpeta)
  
-        return "Usuario y Alumno creados exitosamente."
+        return "Usuario y Alumno creados exitosamente.",201
 
     except Exception as e:
         # En caso de error, realizar un rollback para deshacer los cambios
@@ -152,3 +155,72 @@ def registroValidador():
         db.session.rollback()
         return f"Error al crear Usuario y Validadorr: {str(e)}"
     return 0
+
+@app.route('/subirReporte', methods=['POST'])
+def subirReporte():
+
+    try:
+        #data = request.get_json()
+        # Intenta obtener el valor del campo 'JSON' del formulario multipart
+        json_data_str = request.values.get('JSON')
+        # Si se encuentra el campo 'JSON', convierte su valor a un diccionario
+        if json_data_str:
+            data = json.loads(json_data_str)
+        else:
+            # Si no se encuentra el campo 'JSON', intenta obtener datos JSON directamente del cuerpo de la solicitud
+            data = request.get_json(force=True)
+        # Intenta obtener el ID del alumno y las horas del JSON
+        id_alumno = data.get('alumno')
+        horas = data.get('horas')
+
+        pdf_file = request.files['pdf']
+        todo=request.values
+        #id_alumno = request.values.get('alumno')
+        #horas = request.values.get('horas')
+        print(todo)
+        alumnoReq = (
+            db.session.query(alumno)
+            .filter_by(id=id_alumno)
+            .first()
+        )
+        if not alumnoReq:
+            return "No existe el alumno"
+
+        ruta_carpeta = f"../archivo/{alumnoReq.curp}/reportes"
+        file_path = f"{ruta_carpeta}/{pdf_file.filename}"
+        reporteExist=(
+            db.session.query(reporte)
+            .filter(reporte.archivoreporte == file_path)
+            .first()
+        )
+        if (reporteExist):
+            return "Error: Este reporte ya existe"
+        
+        # Verificar si la carpeta padre existe, y si no, crearla
+        carpeta_padre = os.path.dirname(file_path)
+        if not os.path.exists(carpeta_padre):
+            os.makedirs(carpeta_padre)
+        
+        pdf_file.save(f"{ruta_carpeta}//{pdf_file.filename}")
+
+        solicitudReq = (
+            db.session.query(solicitud)
+            .filter(solicitud.alumno == id_alumno, solicitud.fechaliberacion.is_(None))
+            .order_by(solicitud.fechasolicitud)
+            .first()
+        )
+
+        nuevoReporte = reporte()
+        nuevoReporte.archivoreporte = file_path
+        nuevoReporte.horas = horas
+        nuevoReporte.solicitud = solicitudReq.id
+
+        db.session.add(nuevoReporte)
+        db.session.commit()
+
+        return "Reporte creado.", 201
+    except exc.SQLAlchemyError as e:
+        db.session.rollback()
+        return f"Error en la base de datos: {str(e)}", 500
+    except Exception as e:
+        return f"Error: {str(e)}", 500
