@@ -87,7 +87,10 @@ CREATE TABLE solicitud (
 	liberacion text,
 	fechaLiberacion date,
 	fechaSolicitud date,
-	firma text
+	firma text,
+	horas INTEGER,
+	carta_aceptacion TEXT,
+	acceso_alummno BOOLEAN DEFAULT TRUE
 );
 
 CREATE TABLE reporte (

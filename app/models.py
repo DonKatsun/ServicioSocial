@@ -86,6 +86,9 @@ class solicitud(db.Model):
     fechaliberacion = db.Column(db.Date)
     fechasolicitud = db.Column(db.Date)
     firma = db.Column(db.Text)
+    horas = db.Column(db.Integer)
+    carta_aceptacion =db.Column(db.Text)
+    acceso_alumno = db.Column(db.Boolean, default=False)
 
 
 class reporte(db.Model):
