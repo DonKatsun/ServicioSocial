@@ -90,7 +90,7 @@ CREATE TABLE solicitud (
 	firma text,
 	horas INTEGER,
 	carta_aceptacion TEXT,
-	acceso_alummno BOOLEAN DEFAULT TRUE
+	acceso_alummno BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE reporte (

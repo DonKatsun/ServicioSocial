@@ -47,7 +47,7 @@ def login():
         response = jsonify({'token': token, 'payload':payload})
         response.headers.add('Access-Control-Allow-Origin', '*')  # Esto puede ser necesario para que acceda el publico
     else:
-        response = "Credenciales incorrectas"
+        response = "Credenciales incorrectas",400
     
     return response
 
@@ -115,7 +115,7 @@ def registroAlumno():
     except Exception as e:
         # En caso de error, realizar un rollback para deshacer los cambios
         db.session.rollback()
-        return f"Error al crear Usuario y Alumno: {str(e)}"
+        return f"Error al crear Usuario y Alumno: {str(e)}",400
 
     return "Error de formato en los datos recibidos."
 
@@ -158,7 +158,7 @@ def registroValidador():
     except Exception as e:
         # En caso de error, realizar un rollback para deshacer los cambios
         db.session.rollback()
-        return f"Error al crear Usuario y Validadorr: {str(e)}"
+        return f"Error al crear Usuario y Validadorr: {str(e)}",400
     return 0
 
 @app.route('/subirReporte', methods=['POST'])
@@ -595,6 +595,74 @@ def consultaReportesAlumno():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/consultaReportesTodos', methods=['GET'])
+def consultaReportesTodos():
+    try:
+        #{todos, tipo}
+        #filtro = request.args.get('filtro')
+        tipo_solicitud = request.args.get('tipo')
+        if tipo_solicitud == "todos":
+            solicitudes = (
+            db.session.query(
+                solicitud,
+                alumno,
+                usuarios,
+                estado,
+                tipo,
+                reporte
+            )
+            .join(alumno, alumno.id == solicitud.alumno)
+            .join(usuarios, alumno.id == usuarios.id)
+            .join(reporte, reporte.solicitud == solicitud.id)
+            .join(estado, estado.id == reporte.estado)
+            .join(tipo, tipo.id == solicitud.tipo)
+            .filter(reporte.estado == 5)
+
+        )
+        else:
+            tipoFiltro = (
+                db.session.query(
+                    tipo
+                )
+                .filter(tipo.tipo == tipo_solicitud)
+                .first()
+            )
+            solicitudes = (
+                db.session.query(
+                    solicitud,
+                    alumno,
+                    usuarios,
+                    estado,
+                    tipo,
+                    reporte
+                )
+                .join(alumno, alumno.id == solicitud.alumno)
+                .join(usuarios, alumno.id == usuarios.id)
+                .join(reporte, reporte.solicitud == solicitud.id)
+                .join(estado, estado.id == reporte.estado)
+                .join(tipo, tipo.id == solicitud.tipo)
+                .filter(tipoFiltro.tipo == tipo_solicitud, reporte.estado == 5)
+            )
+        
+        resultados = solicitudes.all()
+        if not resultados:   return "No hay resultados"
+
+        solicitudes_json = [
+        {
+            "reporte_id": r.id,
+            "nombre": f"{u.nombre} {u.apellidop} {u.apellidom}" if u else None,
+            "estado": str(e.estado) if e else None,
+            "horas": r.horas if r.horas is not None else None,
+            "pdf_reporte": obtener_pdf_base64(r.archivoreporte) if r.archivoreporte is not None else None,
+        }
+        for s, a, u, e, t, r in resultados
+        ]
+
+        return jsonify({"solicitudes": solicitudes_json})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/AceptarRechazarSolicitud', methods=['PATCH'])
 def AceptarRechazarSolicitud():
     try:
@@ -748,3 +816,125 @@ def AceptarRechazarLiberacion():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+    
+
+@app.route('/AceptarRechazarReporte', methods=['PATCH'])
+def AceptarRechazarReporte():
+    try:
+        data = request.get_json()
+        #{"solicitud":"1","estatus":"Rechazado","validador":"8"}
+        reporte_id = data.get('reporte')
+        estatus = data.get('estatus')
+        horas = data.get('horas')
+        #estatus {Aceptado,Rechazado,Liberado,Suspendido,Pendiente}
+        
+        reporteExist=(
+            db.session.query(reporte)
+            .filter(reporte.id == reporte_id)
+            .first()
+        )
+        if not reporteExist:    return "Este reporte no existe"
+
+        if estatus == "Aceptado":
+            estado = 1
+        elif estatus == "Rechazado":
+            estado = 2
+        else:
+            return "Estatus no valido"
+
+        reporteExist.horas = horas
+        reporteExist.estado = estado
+        db.session.commit()
+
+        return jsonify({"mensaje": f"Reporte con ID {reporte_id} modificado correctamente"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+    
+
+@app.route('/alumnoAccedeLiberacion', methods=['PATCH'])
+def alumnoAccedeLiberacion():
+    try:
+        json_data_str = request.values.get('JSON')
+        if json_data_str:
+            data = json.loads(json_data_str)
+        else:
+            data = request.get_json(force=True)
+        solicitud_id = data.get('solicitud')
+        
+        solicitudExist=(
+            db.session.query(solicitud)
+            .filter(solicitud.id == solicitud_id)
+            .first()
+        )
+
+        if not solicitudExist:
+            return "Solicitud no encontrada",400
+
+        solicitudExist.acceso_alumno = True
+        db.session.commit()
+
+        return jsonify({"mensaje": f"El usisario ahora puede acceder"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/alumnos', methods=['GET'])
+def obtener_alumnos():
+    try:
+        alumnos = (
+            db.session.query(alumno, usuarios, plantel, universidad)
+            .join(usuarios, alumno.id == usuarios.id)
+            .join(plantel, alumno.plantel == plantel.id)
+            .join(universidad, plantel.universidad == universidad.id)
+            .all()
+        )
+
+        alumnos_json = [
+            {
+                'id': alumno.id,
+                'curp': alumno.curp,
+                'carrera': alumno.carrera,
+                'usuario': usuario.usuario,
+                'contrasenia': usuario.contrasenia,
+                'nombre': f"{usuario.nombre} {usuario.apellidop} {usuario.apellidom}",
+                'plantel': plantel.nombre,
+                'universidad': universidad.universidad,
+            }
+            for alumno, usuario, plantel, universidad in alumnos
+        ]
+
+        return jsonify({'alumnos': alumnos_json})
+
+    except Exception as e:
+        return str(e), 500
+
+@app.route('/alumnoEditar', methods=['PATCH'])
+def alumnoEditar():
+    try:
+        data = request.get_json()
+        alumno_input = data['alumno']
+        #curp = data['curp']
+        alumnos = (
+            db.session.query(alumno, usuarios)
+            .join(usuarios, alumno.id == usuarios.id)
+            .filter(alumno.id == alumno_input)
+            .first()
+        )
+        if alumnos is None: return "Alumno no encontrado"
+        print(alumnos)
+        return "0"
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+        
+        '''curp = data.get('curp')
+        carrera = data.get('carrera')
+        usuario = data.get('usuario')
+        contrasenia = data.get('contrasenia')
+        nombre = data.get('nombre')
+        apellidop = data.get('apellidop')
+        apellidom = data.get('apellidom')
+        plantel_id = data.get('plantel')'''
