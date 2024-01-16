@@ -39,12 +39,12 @@ def login():
             'nombre': f"{usuarioAuth.nombre} {usuarioAuth.apellidop} {usuarioAuth.apellidom}",
             'exp': datetime.utcnow() + timedelta(hours=2),  # Tiempo de expiración del token
             'rol': rolUsuario.rol,
-            'id': usuarioAuth.id
+            'id': usuarioAuth.id,
         }
         token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
 
         # Incluye el token en la respuesta JSON
-        response = jsonify({'token': token, 'payload':payload})
+        response = jsonify({'token': token, 'nombre': payload['nombre'],'exp': payload['exp'],'rol': payload['rol'],'id': payload['id']})
         response.headers.add('Access-Control-Allow-Origin', '*')  # Esto puede ser necesario para que acceda el publico
     else:
         response = "Credenciales incorrectas",400
@@ -916,7 +916,14 @@ def alumnoEditar():
     try:
         data = request.get_json()
         alumno_input = data['alumno']
-        #curp = data['curp']
+        curpN = data.get('curp')
+        carrera = data.get('carrera')
+        usuario = data.get('usuario')
+        contrasenia = data.get('contrasenia')
+        nombre = data.get('nombre')
+        apellidop = data.get('apellidop')
+        apellidom = data.get('apellidom')
+        plantel_id = data.get('plantel')
         alumnos = (
             db.session.query(alumno, usuarios)
             .join(usuarios, alumno.id == usuarios.id)
@@ -924,7 +931,12 @@ def alumnoEditar():
             .first()
         )
         if alumnos is None: return "Alumno no encontrado"
-        print(alumnos)
+        #print(alumnos[0].curp)
+        if curpN:   alumnos[0].curp
+        if carrera: alumnos[0].carrera
+        if usuario: alumnos[1].usuario
+        if contrasenia: alumnos[1].contrasenia
+        if nombre: alumnos[1].nombre
         return "0"
     except Exception as e:
         db.session.rollback()
