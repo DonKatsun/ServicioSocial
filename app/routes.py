@@ -53,12 +53,6 @@ def login():
 
 @app.route('/')
 def index():
-    #usuarios = Usuario.query.all()
-    #return render_template('index.html', usuarios=usuarios)
-    usuarioss = usuarios.query.all()
-    for usuario in usuarioss:
-        print(f"ID: {usuario.id}, Usuario: {usuario.usuario}, Nombre: {usuario.nombre}")
-    print(f"Valor de SECRET_KEY: {app.config['SECRET_KEY']}")
     return "Log in"
 
 @app.route('/registroAlumno', methods=['POST'])
@@ -937,16 +931,36 @@ def alumnoEditar():
         if usuario: alumnos[1].usuario
         if contrasenia: alumnos[1].contrasenia
         if nombre: alumnos[1].nombre
-        return "0"
+        if apellidop: alumnos[1].apellidop
+        if apellidom: alumnos[1].apellidom
+        if plantel_id: alumnos[1].plantel_id
+
+        db.session.commit()
+        return "Actualización completada",200
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
         
-        '''curp = data.get('curp')
-        carrera = data.get('carrera')
-        usuario = data.get('usuario')
-        contrasenia = data.get('contrasenia')
-        nombre = data.get('nombre')
-        apellidop = data.get('apellidop')
-        apellidom = data.get('apellidom')
-        plantel_id = data.get('plantel')'''
+@app.route('/planteles', methods=['GET'])
+def plantel_get():
+    try:
+        planteles = (
+            db.session.query(plantel, universidad)
+            .join(universidad, plantel.universidad == universidad.id)
+            .all()
+        )
+
+        planteles_json = [
+            {
+                'id_plantel': plantel.id,
+                'id_universidad': universidad.id,
+                'universidad': universidad.universidad,
+                'plantel': plantel.nombre
+            }
+            for plantel, universidad in planteles
+        ]
+
+        return jsonify(planteles_json)
+
+    except Exception as e:
+        return str(e), 500
