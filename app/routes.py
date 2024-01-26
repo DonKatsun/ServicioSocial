@@ -1,4 +1,5 @@
-from flask import render_template, jsonify, request
+from flask import render_template, jsonify, request, send_file
+import qrcode
 from app import app
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import desc,or_,func,case,literal_column
@@ -9,6 +10,7 @@ import json
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
+from io import BytesIO
 import base64
 import secrets
 import string
@@ -229,6 +231,7 @@ def subirReporte():
 def subirCarta():
 
     try:
+        print(request.values)
         #data = request.get_json()
         # Intenta obtener el valor del campo 'JSON' del formulario multipart
         json_data_str = request.values.get('JSON')
@@ -246,6 +249,7 @@ def subirCarta():
         fecha = data.get('fecha')
 
         pdf_file = request.files['pdf']
+        print(pdf_file)
         #id_alumno = request.values.get('alumno')
         #horas = request.values.get('horas')
         alumnoReq = (
@@ -534,8 +538,8 @@ def consultaAlumno():
             "horas": str(s.horas) if s.horas is not None else None,
             "accesoAlumno": s.acceso_alumno if s.acceso_alumno is not None else None,
             "horas_abrobadas": sum if sum is not None else 0,
-            "pdf_aceptacion": obtener_pdf_base64(s.liberacion) if s.liberacion is not None else None,
-            "pdf_liberacion": obtener_pdf_base64(s.carta_aceptacion) if ((s.carta_aceptacion is not None) and s.acceso_alumno) else None
+            "pdf_liberacion": obtener_pdf_base64(s.liberacion) if s.liberacion is not None else None,
+            "pdf_aceptacion": obtener_pdf_base64(s.carta_aceptacion) if ((s.carta_aceptacion is not None) and s.acceso_alumno) else None
         }
         for s, a, u, e, t, sum in resultados
         ]
@@ -926,14 +930,15 @@ def alumnoEditar():
         )
         if alumnos is None: return "Alumno no encontrado"
         #print(alumnos[0].curp)
-        if curpN:   alumnos[0].curp
-        if carrera: alumnos[0].carrera
-        if usuario: alumnos[1].usuario
-        if contrasenia: alumnos[1].contrasenia
-        if nombre: alumnos[1].nombre
-        if apellidop: alumnos[1].apellidop
-        if apellidom: alumnos[1].apellidom
-        if plantel_id: alumnos[1].plantel_id
+        #print(curpN)
+        if curpN:   alumnos[0].curp = curpN
+        if carrera: alumnos[0].carrera = carrera
+        if usuario: alumnos[1].usuario = usuario
+        if contrasenia: alumnos[1].contrasenia = contrasenia
+        if nombre: alumnos[1].nombre = nombre
+        if apellidop: alumnos[1].apellidop = apellidop
+        if apellidom: alumnos[1].apellidom = apellidom
+        if plantel_id: alumnos[1].plantel_id = plantel_id
 
         db.session.commit()
         return "Actualización completada",200
@@ -964,3 +969,118 @@ def plantel_get():
 
     except Exception as e:
         return str(e), 500
+
+@app.route('/dependencias', methods=['GET'])
+def dependencias_get():
+    try:
+        dependenciasAll = (
+            db.session.query(dependencia, secretaria)
+            .join(secretaria, secretaria.id == dependencia.secretaria)
+            .all()
+        )
+
+        secretarias_json = [
+            {
+                'id_dependencia': dependencia.id,
+                'id_secretaria': secretaria.id,
+                'dependencia': dependencia.dependencia,
+                'secretaria': secretaria.secretaria
+            }
+            for dependencia, secretaria in dependenciasAll
+        ]
+
+        return jsonify(secretarias_json)
+
+    except Exception as e:
+        return str(e), 500
+    
+
+@app.route('/dependenciaEditar', methods=['PATCH'])
+def dependenciaEditar():
+    try:
+        data = request.get_json()
+        id_dependencia = data.get('dependencia')
+        nombre = data.get('nombre')
+        id_secretaria = data.get('secretaria')
+        
+        if not id_dependencia:  return "Error de dependencia",400
+
+        dependencias = (
+            db.session.query(dependencia)
+            .filter(dependencia.id == id_dependencia)
+            .first()
+        )
+        if dependencias is None: return "Dependencia no encontrada"
+        #print(alumnos[0].curp)
+        if nombre:  dependencias.dependencia = nombre
+        if id_secretaria:   dependencias.secretaria = id_secretaria
+
+        db.session.commit()
+        return "Actualización completada",200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+    
+
+@app.route('/agregarUniversidadPlantel', methods=['POST'])
+def agregarUniversidadPlantel():
+    try:
+        data = request.get_json()
+        id_universidad = data.get('id_universidad')
+        universidad_nombre = data.get('universidad_nombre')
+        plantel_nombre = data.get('plantel_nombre')
+        direccion = data.get('direccion')
+        if id_universidad and plantel_nombre and direccion:
+            nuevoPlantel = plantel()
+            nuevoPlantel.activo = True
+            nuevoPlantel.direccion = direccion
+            nuevoPlantel.nombre = plantel_nombre
+            nuevoPlantel.universidad = id_universidad
+            db.session.add(nuevoPlantel)
+            db.session.commit()
+            return "Plantel agregado correctamente",200
+        elif not universidad_nombre:
+            return "Parametros de creación no validos",400
+        nuevaUniversidad = universidad()
+        nuevaUniversidad.activo = True
+        nuevaUniversidad.universidad = universidad_nombre
+        db.session.add(nuevaUniversidad)
+        db.session.commit()
+        return "Universidad creada correctamente",200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/generarQr', methods=['GET'])
+def generarQr():
+
+    
+    solicitud_id = request.args.get('solicitud')
+
+    datos_qr = f"Datos de la solicitud {solicitud_id}"
+
+    # Generar el código QR
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(datos_qr)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+
+    # Convertir la imagen a base64
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+
+    # Enviar la respuesta JSON con la imagen base64
+    response_data = {
+        'solicitud_id': solicitud_id,
+        'qr_image_base64': img_base64,
+    }
+
+    return jsonify(response_data)
