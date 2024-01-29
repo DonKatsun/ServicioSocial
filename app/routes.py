@@ -16,6 +16,7 @@ import secrets
 import string
 from sqlalchemy import exc
 from app.models import *
+import hashlib
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
@@ -1054,11 +1055,29 @@ def agregarUniversidadPlantel():
     
 @app.route('/generarQr', methods=['GET'])
 def generarQr():
-
-    
     solicitud_id = request.args.get('solicitud')
+    solicitudes = (
+            db.session.query(solicitud,alumno,usuarios,estado,tipo)
+            .join(alumno, alumno.id == solicitud.alumno)
+            .join(usuarios, alumno.id == usuarios.id)
+            .join(estado, estado.id == solicitud.estado)
+            .join(tipo, tipo.id == solicitud.tipo)
+            .filter(solicitud.id == solicitud_id)
+            .order_by(solicitud.fechasolicitud)
+            .limit(1)
+            )
+    resultados = solicitudes.all()
+    datos_qr = '\n'.join([
+        f"{s.id}||{u.nombre} {u.apellidop} {u.apellidom}||\n{e.estado}||{t.tipo}||\n{s.firma}||{s.fechaliberacion}"
+        for s, a, u, e, t in resultados
+    ])
+    #print(resultados[0][0].firma)
+    cadena=f"{resultados[0][0].firma}|{resultados[0][0].fechaliberacion}|{resultados[0][0].fechasolicitud}|{resultados[0][0].fechasolicitud}|{resultados[0][0].firma}"
+    firma_base64 = base64.b64encode(cadena.encode('utf-8')).decode('utf-8')
+    hash_obj = hashlib.sha256(firma_base64.encode('utf-8'))
 
-    datos_qr = f"Datos de la solicitud {solicitud_id}"
+    firma = hash_obj.hexdigest()
+    
 
     # Generar el código QR
     qr = qrcode.QRCode(
@@ -1081,6 +1100,7 @@ def generarQr():
     response_data = {
         'solicitud_id': solicitud_id,
         'qr_image_base64': img_base64,
+        'firma':firma*10
     }
 
     return jsonify(response_data)
