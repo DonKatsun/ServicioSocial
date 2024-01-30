@@ -186,7 +186,7 @@ def subirReporte():
             .first()
         )
         if not alumnoReq:
-            return "No existe el alumno"
+            return "No existe el alumno",400
 
         ruta_carpeta = f"../archivo/{alumnoReq.curp}/reportes"
         file_path = f"{ruta_carpeta}/{pdf_file.filename}"
@@ -196,7 +196,7 @@ def subirReporte():
             .first()
         )
         if (reporteExist):
-            return "Error: Este reporte ya existe"
+            return "Error: Este reporte ya existe",400
         
         # Verificar si la carpeta padre existe, y si no, crearla
         carpeta_padre = os.path.dirname(file_path)
@@ -224,7 +224,7 @@ def subirReporte():
         return "Reporte creado.", 201
     except exc.SQLAlchemyError as e:
         db.session.rollback()
-        return f"Error en la base de datos: {str(e)}", 500
+        return f"Error en la base de datos: {str(e)}", 400
     except Exception as e:
         return f"Error: {str(e)}", 500
 
@@ -259,7 +259,7 @@ def subirCarta():
             .first()
         )
         if not alumnoReq:
-            return "No existe el alumno"
+            return "No existe el alumno",400
 
         ruta_carpeta = f"../archivo/{alumnoReq.curp}/solicitudes"
         file_path = f"{ruta_carpeta}/{pdf_file.filename}"
@@ -269,7 +269,7 @@ def subirCarta():
             .first()
         )
         if (solicitudExist):
-            return "Error: Esta solicitud ya existe"
+            return "Error: Esta solicitud ya existe",400
         
         # Verificar si la carpeta padre existe, y si no, crearla
         carpeta_padre = os.path.dirname(file_path)
