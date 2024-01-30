@@ -373,7 +373,7 @@ def consultaSolicitudes():
             .limit(limite)
             )
         else:
-            return "Error, filtros validos: todos,Aceptado,Rechazado,Liberado,Suspendido,Pendiente"
+            return "Error, filtros validos: todos,Aceptado,Rechazado,Liberado,Suspendido,Pendiente",400
         
         
         resultados = solicitudes.all()
@@ -461,7 +461,7 @@ def consultaLiberaciones():
             .limit(limite)
             )
         else:
-            return "Error de filtros"
+            return "Error de filtros",400
         
         
         resultados = solicitudes.all()
@@ -498,7 +498,7 @@ def obtener_pdf_base64(ruta_pdf):
 @app.route('/consultaAlumno', methods=['GET'])
 def consultaAlumno():
     alumno_id = request.args.get('alumno')
-    if not alumno_id:   return "Usuario no enviado"
+    if not alumno_id:   return "Usuario no enviado",400
 
     try:
         solicitudes = (
@@ -553,7 +553,7 @@ def consultaAlumno():
 @app.route('/consultaReportesAlumno', methods=['GET'])
 def consultaReportesAlumno():
     alumno_id = request.args.get('alumno')
-    if not alumno_id:   return "Usuario no enviado"
+    if not alumno_id:   return "Usuario no enviado",400
 
     try:
         solicitudes = (
@@ -575,7 +575,7 @@ def consultaReportesAlumno():
     )
         
         resultados = solicitudes.all()
-        if not resultados:   return "No hay resultados"
+        if not resultados:   return "No hay resultados",400
 
         solicitudes_json = [
         {
@@ -644,7 +644,7 @@ def consultaReportesTodos():
             )
         
         resultados = solicitudes.all()
-        if not resultados:   return "No hay resultados"
+        if not resultados:   return "No hay resultados",400
 
         solicitudes_json = [
         {
@@ -715,7 +715,7 @@ def AceptarRechazarSolicitud():
             .first()
         )
         if (solicitudExiste):
-            return "Error: Esta solicitud ya existe"
+            return "Error: Esta solicitud ya existe",400
         
         # Verificar si la carpeta padre existe, y si no, crearla
         carpeta_padre = os.path.dirname(file_path)
@@ -788,7 +788,7 @@ def AceptarRechazarLiberacion():
             .first()
         )
         if (solicitudExiste):
-            return "Error: Esta solicitud ya existe"
+            return "Error: Esta solicitud ya existe",400
         
         # Verificar si la carpeta padre existe, y si no, crearla
         carpeta_padre = os.path.dirname(file_path)
@@ -832,14 +832,14 @@ def AceptarRechazarReporte():
             .filter(reporte.id == reporte_id)
             .first()
         )
-        if not reporteExist:    return "Este reporte no existe"
+        if not reporteExist:    return "Este reporte no existe",400
 
         if estatus == "Aceptado":
             estado = 1
         elif estatus == "Rechazado":
             estado = 2
         else:
-            return "Estatus no valido"
+            return "Estatus no valido",400
 
         reporteExist.horas = horas
         reporteExist.estado = estado
