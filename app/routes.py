@@ -1096,11 +1096,18 @@ def generarQr():
     img.save(buffered, format="PNG")
     img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
+    anexo = (
+            db.session.query(anexos)
+            .filter(anexos.id == 1)
+            .limit(1)
+            ).first()
+
     # Enviar la respuesta JSON con la imagen base64
     response_data = {
         'solicitud_id': solicitud_id,
         'qr_image_base64': img_base64,
-        'firma':firma*10
+        'firma':firma*10,
+        'firma_base64':anexo.anexo
     }
 
     return jsonify(response_data)

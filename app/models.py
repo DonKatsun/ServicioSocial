@@ -97,3 +97,8 @@ class reporte(db.Model):
     archivoreporte = db.Column(db.Text)
     horas = db.Column(db.Integer)
     estado = db.Column(db.Integer, db.ForeignKey('estado.id'))
+
+class anexos(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    descripcion = db.Column(db.Text)
+    anexo = db.Column(db.Text)
