@@ -160,7 +160,7 @@ def registroValidador():
 
 @app.route('/subirReporte', methods=['POST'])
 def subirReporte():
-
+    print(request.values)
     try:
         #data = request.get_json()
         # Intenta obtener el valor del campo 'JSON' del formulario multipart
@@ -179,7 +179,7 @@ def subirReporte():
         todo=request.values
         #id_alumno = request.values.get('alumno')
         #horas = request.values.get('horas')
-        print(todo)
+        #print(todo)
         alumnoReq = (
             db.session.query(alumno)
             .filter_by(id=id_alumno)
@@ -480,7 +480,6 @@ def consultaLiberaciones():
         for s, a, u, e, t in resultados
         ]
 
-        print("hola")
         return jsonify({"solicitudes": solicitudes_json})
     
     except Exception as e:
@@ -1111,3 +1110,31 @@ def generarQr():
     }
 
     return jsonify(response_data)
+
+@app.route('/datosAceptacion', methods=['GET'])
+def datosAceptacion():
+    try:
+        solicitud_id = request.args.get('solicitud')
+        solicitudes = (
+                db.session.query(solicitud,alumno,usuarios)
+                .join(alumno, alumno.id == solicitud.alumno)
+                .join(usuarios, alumno.id == usuarios.id)
+                .filter(solicitud.id == solicitud_id)
+                .limit(1)
+                )
+        resultados = solicitudes.all()
+        if not resultados:  return "Solicitud no encontrada",400
+        #print(resultados)
+        sol= resultados[0][0]
+        alum = resultados[0][1]
+        us = resultados[0][2]
+        response = {
+            "alumno":f"{us.nombre} {us.apellidop} {us.apellidom}",
+            "solicitud" : sol.id,
+            "carrera": alum.carrera
+        }
+        return jsonify(response)
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
