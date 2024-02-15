@@ -1,103 +1,101 @@
--- Database: servicioSocial
---DROP DATABASE IF EXISTS "servicioSocial";
-
---CREATE DATABASE "servicioSocial"
---    WITH
---    OWNER = postgres
---    ENCODING = 'UTF8'
---    LC_COLLATE = 'Spanish_Mexico.1252'
---    LC_CTYPE = 'Spanish_Mexico.1252'
---    LOCALE_PROVIDER = 'libc'
---    TABLESPACE = pg_default
---    CONNECTION LIMIT = -1
---    IS_TEMPLATE = False;
---CREATE TYPE estado AS ENUM ('Aceptado', 'Rechazado', 'Liberado', 'Suspendido','Pendiente');
---CREATE TYPE tipo AS ENUM ('Servivicio social', 'Prácticas profecionales');
-CREATE TABLE estado(
-	id SERIAL PRIMARY KEY,
-	estado VARCHAR(20)
+CREATE TABLE estado (
+    id SERIAL PRIMARY KEY,
+    estado VARCHAR(20) NOT NULL
 );
 
 CREATE TABLE tipo (
     id SERIAL PRIMARY KEY,
-	tipo varchar(50) NOT NULL,
-	activo bool not NULL
+    tipo VARCHAR(50) NOT NULL,
+    activo BOOLEAN NOT NULL
 );
 
-CREATE TABLE rol(
-	id SERIAL PRIMARY KEY,
-	rol VARCHAR(50)
+CREATE TABLE rol (
+    id SERIAL PRIMARY KEY,
+    rol VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE usuarios (
     id SERIAL PRIMARY KEY,
-	usuario varchar(50) NOT NULL,
-	contrasenia text NOT NULL,
+    usuario VARCHAR(50) NOT NULL,
+    contrasenia TEXT NOT NULL,
     nombre VARCHAR(50) NOT NULL,
-	apellidoP VARCHAR(50) NOT NULL,
-	apellidoM VARCHAR(50),
-	rol INTEGER REFERENCES rol(id)
+    apellidop VARCHAR(50) NOT NULL,
+    apellidom VARCHAR(50),
+    rol INTEGER REFERENCES rol(id)
 );
 
 CREATE TABLE secretaria (
     id SERIAL PRIMARY KEY,
-	secretaria varchar(100) NOT NULL
+    secretaria VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE dependencia (
     id SERIAL PRIMARY KEY,
-	dependencia varchar(100) NOT NULL,
-	secretaria INTEGER REFERENCES secretaria(id) ON DELETE SET NULL ON UPDATE CASCADE
+    dependencia VARCHAR(100) NOT NULL,
+    secretaria INTEGER REFERENCES secretaria(id)
 );
 
 CREATE TABLE universidad (
     id SERIAL PRIMARY KEY,
-	universidad varchar(100) NOT NULL, 
-	activo BOOLEAN DEFAULT TRUE
+    universidad VARCHAR(100) NOT NULL,
+    activo BOOLEAN DEFAULT TRUE
 );
 
 CREATE TABLE plantel (
     id SERIAL PRIMARY KEY,
-	nombre varchar(100) NOT NULL,
-	direccion varchar(250),
-	universidad INTEGER REFERENCES universidad(id) ON DELETE SET NULL ON UPDATE CASCADE,
-	activo BOOLEAN DEFAULT TRUE
+    nombre VARCHAR(100) NOT NULL,
+    direccion VARCHAR(250),
+    universidad INTEGER REFERENCES universidad(id),
+    activo BOOLEAN DEFAULT TRUE
 );
 
 CREATE TABLE validador (
-    id INTEGER PRIMARY KEY REFERENCES usuarios(id),
-	dependencia INTEGER REFERENCES dependencia(id) ON DELETE SET NULL ON UPDATE CASCADE
+    id INTEGER PRIMARY KEY,
+    dependencia INTEGER REFERENCES dependencia(id)
 );
 
 CREATE TABLE alumno (
-    id INTEGER PRIMARY KEY REFERENCES usuarios(id),
-	curp varchar(100),
-	carrera varchar(100),
-	plantel INTEGER REFERENCES plantel(id) ON DELETE SET NULL ON UPDATE CASCADE
+    id INTEGER PRIMARY KEY,
+    curp VARCHAR(100),
+    carrera VARCHAR(100),
+    plantel INTEGER REFERENCES plantel(id),
+    matricula VARCHAR(100)
+);
+
+CREATE TABLE proyectos (
+    id SERIAL PRIMARY KEY,
+    nombre_proyecto TEXT,
+    activo BOOLEAN
 );
 
 CREATE TABLE solicitud (
     id SERIAL PRIMARY KEY,
-	dependencia INTEGER REFERENCES dependencia(id) ON DELETE SET NULL ON UPDATE CASCADE,
-	alumno INTEGER REFERENCES usuarios(id),
-	validador INTEGER REFERENCES validador(id),
-	estado INTEGER REFERENCES estado(id),
-	tipo INTEGER REFERENCES tipo(id),
-	anexo text,
-	liberacion text,
-	fechaLiberacion date,
-	fechaSolicitud date,
-	firma text,
-	horas INTEGER,
-	carta_aceptacion TEXT,
-	acceso_alummno BOOLEAN DEFAULT FALSE
+    dependencia INTEGER REFERENCES dependencia(id),
+    alumno INTEGER REFERENCES usuarios(id),
+    validador INTEGER REFERENCES validador(id),
+    estado INTEGER REFERENCES estado(id),
+    tipo INTEGER REFERENCES tipo(id),
+    anexo TEXT,
+    liberacion TEXT,
+    fechaliberacion DATE,
+    fechasolicitud DATE,
+    firma TEXT,
+    horas INTEGER,
+    carta_aceptacion TEXT,
+    acceso_alumno BOOLEAN DEFAULT FALSE,
+    proyecto INTEGER REFERENCES proyectos(id)
 );
 
 CREATE TABLE reporte (
-    id SERIAL,
-	solicitud INTEGER REFERENCES solicitud(id) ON UPDATE CASCADE,
-	archivoReporte text,
-	horas INTEGER,
-	estado INTEGER REFERENCES estado(id),
-	PRIMARY KEY (id,solicitud)
+    id SERIAL PRIMARY KEY,
+    solicitud INTEGER REFERENCES solicitud(id),
+    archivoreporte TEXT,
+    horas INTEGER,
+    estado INTEGER REFERENCES estado(id)
+);
+
+CREATE TABLE anexos (
+    id SERIAL PRIMARY KEY,
+    descripcion TEXT,
+    anexo TEXT
 );

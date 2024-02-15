@@ -377,14 +377,16 @@ def consultaSolicitudes():
         
         
         resultados = solicitudes.all()
-
+        #escuela--fecha
         solicitudes_json = [
         {
             "solicitud_id": s.id,
             "nombre": f"{u.nombre} {u.apellidop} {u.apellidom}" if u and u.nombre and u.apellidop and u.apellidom else None,
             "estado": e.estado if e else None,
             "tipo": t.tipo if t else None,
-            "pdf": obtener_pdf_base64(s.anexo) if s.anexo else None
+            "fecha":s.fechasolicitud,
+            "pdf": obtener_pdf_base64(s.anexo) if s.anexo else None,
+            
         }
         for s, a, u, e, t in resultados
         ]
@@ -1116,9 +1118,10 @@ def datosAceptacion():
     try:
         solicitud_id = request.args.get('solicitud')
         solicitudes = (
-                db.session.query(solicitud,alumno,usuarios)
+                db.session.query(solicitud,alumno,usuarios,proyectos)
                 .join(alumno, alumno.id == solicitud.alumno)
                 .join(usuarios, alumno.id == usuarios.id)
+                .join(proyectos, proyectos.id == solicitud.proyecto)
                 .filter(solicitud.id == solicitud_id)
                 .limit(1)
                 )
@@ -1128,13 +1131,67 @@ def datosAceptacion():
         sol= resultados[0][0]
         alum = resultados[0][1]
         us = resultados[0][2]
+        proyecto = resultados[0][3]
         response = {
             "alumno":f"{us.nombre} {us.apellidop} {us.apellidom}",
             "solicitud" : sol.id,
-            "carrera": alum.carrera
+            "carrera": alum.carrera,
+            "proyecto": proyecto.nombre_proyecto,
         }
         return jsonify(response)
     
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+    
+
+@app.route('/solicitarLiberacion', methods=['PATCH'])
+def solicitarLiberacion():
+    solicitud_id = request.args.get('solicitud')
+    try:
+        solicitudes = (
+                db.session.query(solicitud)
+                .filter(solicitud.id == solicitud_id)
+                .limit(1)
+                .first()
+                )
+        
+        if not solicitudes:
+            return "Solicitud no encontrada",400
+        
+        solicitudes.estado=6
+        db.session.commit()
+        return "Liberacion solicitada",200
+
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/idSolicitud', methods=['GET'])
+def idSolicitud():
+    id_alumno = request.args.get('alumno')
+    try:
+        solicitudes = (
+            db.session.query(solicitud)
+            .filter(
+                solicitud.alumno == id_alumno, 
+                solicitud.fechaliberacion.is_(None),
+                solicitud.carta_aceptacion.isnot(None),  # Cambiado de not(solicitud.carta_aceptacion.is_(None))
+                solicitud.estado == 1
+            )
+            .order_by(solicitud.fechasolicitud)
+            .limit(1)
+            .first()
+        )
+        print(solicitudes)
+        if not solicitudes:
+            return "Ningina solicitud aplicable para liberación",400
+        
+        response={"id":solicitudes.id,}
+        return jsonify(response)
+
+
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500

@@ -25,17 +25,10 @@ class usuarios(db.Model):
     apellidom = db.Column(db.String(50))
     rol = db.Column(db.Integer, db.ForeignKey('rol.id'))
 
-'''    def __init__(self, usuario, contrasenia, nombre, apellidop, apellidom, rol):
-        self.usuario = usuario
-        self.contrasenia = contrasenia
-        self.nombre = nombre
-        self.apellidop = apellidop
-        self.apellidom = apellidom
-        self.rol = rol'''
 
 class secretaria(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    secretaria = db.Column(db.String(100), nullable=False)
+    secretaria = db.Column(db.Text, nullable=False)
 
 
 class dependencia(db.Model):
@@ -68,11 +61,17 @@ class alumno(db.Model):
     curp = db.Column(db.String(100))
     carrera = db.Column(db.String(100))
     plantel = db.Column(db.Integer, db.ForeignKey('plantel.id'))
+    matricula = db.Column(db.String(100))
 
 '''    def __init__(self, curp, carrera, plantel):
         self.curp = curp
         self.carrera = carrera
         self.plantel = plantel'''
+
+class proyectos(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre_proyecto = db.Column(db.Text)
+    activo = db.Column(db.Boolean)
 
 class solicitud(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -89,6 +88,7 @@ class solicitud(db.Model):
     horas = db.Column(db.Integer)
     carta_aceptacion =db.Column(db.Text)
     acceso_alumno = db.Column(db.Boolean, default=False)
+    proyecto = db.Column(db.Integer, db.ForeignKey('proyectos.id'))
 
 
 class reporte(db.Model):
