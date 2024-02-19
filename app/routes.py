@@ -309,65 +309,77 @@ def consultaSolicitudes():
         
         if filtro=='todos':
             solicitudes = (
-            db.session.query(solicitud,alumno,usuarios,estado,tipo)
+            db.session.query(solicitud,alumno,usuarios,estado,tipo,plantel,universidad)
             .join(alumno, alumno.id == solicitud.alumno)
             .join(usuarios, alumno.id == usuarios.id)
             .join(estado, estado.id == solicitud.estado)
             .join(tipo, tipo.id == solicitud.tipo)
+            .join(plantel, plantel.id == alumno.plantel)
+            .join(universidad, universidad.id == plantel.universidad)
             .order_by(solicitud.fechasolicitud)
             .limit(limite)
             )
         elif filtro=='Aceptado':
             solicitudes = (
-            db.session.query(solicitud,alumno,usuarios,estado,tipo)
+            db.session.query(solicitud,alumno,usuarios,estado,tipo,plantel,universidad)
             .join(alumno, alumno.id == solicitud.alumno)
             .join(usuarios, alumno.id == usuarios.id)
             .join(estado, estado.id == solicitud.estado)
             .join(tipo, tipo.id == solicitud.tipo)
+            .join(plantel, plantel.id == alumno.plantel)
+            .join(universidad, universidad.id == plantel.universidad)
             .filter(solicitud.estado == 1)
             .order_by(solicitud.fechasolicitud)
             .limit(limite)
             )
         elif filtro=='Rechazado':
             solicitudes = (
-            db.session.query(solicitud,alumno,usuarios,estado,tipo)
+            db.session.query(solicitud,alumno,usuarios,estado,tipo,plantel,universidad)
             .join(alumno, alumno.id == solicitud.alumno)
             .join(usuarios, alumno.id == usuarios.id)
             .join(estado, estado.id == solicitud.estado)
             .join(tipo, tipo.id == solicitud.tipo)
+            .join(plantel, plantel.id == alumno.plantel)
+            .join(universidad, universidad.id == plantel.universidad)
             .filter(solicitud.estado == 2)
             .order_by(solicitud.fechasolicitud)
             .limit(limite)
             )
         elif filtro=='Liberado':
             solicitudes = (
-            db.session.query(solicitud,alumno,usuarios,estado,tipo)
+            db.session.query(solicitud,alumno,usuarios,estado,tipo,plantel,universidad)
             .join(alumno, alumno.id == solicitud.alumno)
             .join(usuarios, alumno.id == usuarios.id)
             .join(estado, estado.id == solicitud.estado)
             .join(tipo, tipo.id == solicitud.tipo)
+            .join(plantel, plantel.id == alumno.plantel)
+            .join(universidad, universidad.id == plantel.universidad)
             .filter(solicitud.estado == 3)
             .order_by(solicitud.fechasolicitud)
             .limit(limite)
             )
         elif filtro=='Suspendido':
             solicitudes = (
-            db.session.query(solicitud,alumno,usuarios,estado,tipo)
+            db.session.query(solicitud,alumno,usuarios,estado,tipo,plantel,universidad)
             .join(alumno, alumno.id == solicitud.alumno)
             .join(usuarios, alumno.id == usuarios.id)
             .join(estado, estado.id == solicitud.estado)
             .join(tipo, tipo.id == solicitud.tipo)
+            .join(plantel, plantel.id == alumno.plantel)
+            .join(universidad, universidad.id == plantel.universidad)
             .filter(solicitud.estado == 4)
             .order_by(solicitud.fechasolicitud)
             .limit(limite)
             )
         elif filtro=='Pendiente':
             solicitudes = (
-            db.session.query(solicitud,alumno,usuarios,estado,tipo)
+            db.session.query(solicitud,alumno,usuarios,estado,tipo,plantel,universidad)
             .join(alumno, alumno.id == solicitud.alumno)
             .join(usuarios, alumno.id == usuarios.id)
             .join(estado, estado.id == solicitud.estado)
             .join(tipo, tipo.id == solicitud.tipo)
+            .join(plantel, plantel.id == alumno.plantel)
+            .join(universidad, universidad.id == plantel.universidad)
             .filter(solicitud.estado == 5)
             .order_by(solicitud.fechasolicitud)
             .limit(limite)
@@ -382,13 +394,15 @@ def consultaSolicitudes():
         {
             "solicitud_id": s.id,
             "nombre": f"{u.nombre} {u.apellidop} {u.apellidom}" if u and u.nombre and u.apellidop and u.apellidom else None,
+            "plantel":p.nombre,
+            "universidad":uni.universidad,
             "estado": e.estado if e else None,
             "tipo": t.tipo if t else None,
             "fecha":s.fechasolicitud,
             "pdf": obtener_pdf_base64(s.anexo) if s.anexo else None,
             
         }
-        for s, a, u, e, t in resultados
+        for s, a, u, e, t, p, uni in resultados
         ]
 
 
