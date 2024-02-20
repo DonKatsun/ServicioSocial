@@ -1132,10 +1132,12 @@ def datosAceptacion():
     try:
         solicitud_id = request.args.get('solicitud')
         solicitudes = (
-                db.session.query(solicitud,alumno,usuarios,proyectos)
+                db.session.query(solicitud,alumno,usuarios,plantel,universidad)
                 .join(alumno, alumno.id == solicitud.alumno)
                 .join(usuarios, alumno.id == usuarios.id)
-                .join(proyectos, proyectos.id == solicitud.proyecto)
+                #.join(proyectos, proyectos.id == solicitud.proyecto)
+                .join(plantel, plantel.id == alumno.plantel)
+                .join(universidad, universidad.id == plantel.universidad)
                 .filter(solicitud.id == solicitud_id)
                 .limit(1)
                 )
@@ -1145,12 +1147,17 @@ def datosAceptacion():
         sol= resultados[0][0]
         alum = resultados[0][1]
         us = resultados[0][2]
-        proyecto = resultados[0][3]
+        #proyecto = resultados[0][3]
+        plan=resultados[0][3]
+        uni=resultados[0][4]
         response = {
             "alumno":f"{us.nombre} {us.apellidop} {us.apellidom}",
             "solicitud" : sol.id,
             "carrera": alum.carrera,
-            "proyecto": proyecto.nombre_proyecto,
+            "plantel": plan.nombre,
+            "universidad": uni.universidad,
+            "matricula":alum.matricula,
+            #"proyecto": proyecto.nombre_proyecto,
         }
         return jsonify(response)
     
