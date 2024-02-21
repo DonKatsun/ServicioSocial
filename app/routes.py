@@ -92,6 +92,7 @@ def registroAlumno():
         nuevo_alumno.curp = data.get('curp')
         nuevo_alumno.carrera = data.get('carrera')
         nuevo_alumno.plantel = data.get('plantel')
+        nuevo_alumno.matricula = data.get('matricula')
 
         # Agregar ambos objetos a la sesión y confirmar la transacción
         db.session.add(nuevo_alumno)
@@ -1210,6 +1211,29 @@ def idSolicitud():
             return "Ningina solicitud aplicable para liberación",400
         
         response={"id":solicitudes.id,}
+        return jsonify(response)
+
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/consultaProyectos', methods=['GET'])
+def consultaProyectos():
+    #id_alumno = request.args.get('alumno')
+    try:
+        get_proyectos = (
+            db.session.query(proyectos)
+        ).all()
+        #print(solicitudes)
+        if not get_proyectos:
+            return "Ningin proyecto encontrado",400
+        
+        response=[{
+            "id":proyectos.id,
+            "proyecto":proyectos.nombre_proyecto
+            }for proyectos in get_proyectos
+            ] 
         return jsonify(response)
 
 
