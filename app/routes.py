@@ -692,7 +692,7 @@ def AceptarRechazarSolicitud():
         #{"solicitud":"1","estatus":"Rechazado","validador":"8"}
         solicitud_id = data.get('solicitud')
         estatus = data.get('estatus')
-        validador = data.get('validador')
+        #validador = data.get('validador')
         #estatus {Aceptado,Rechazado,Liberado,Suspendido,Pendiente}
         
         solicitudExist=(
@@ -707,7 +707,7 @@ def AceptarRechazarSolicitud():
             .first()
         )
 
-        solicitudExist.validador = validador
+        #solicitudExist.validador = validador
 
         if not solicitudExist:
             return "Solicitud no encontrada",400
@@ -765,7 +765,7 @@ def AceptarRechazarLiberacion():
         #{"solicitud":"1","estatus":"Rechazado","validador":"8"}
         solicitud_id = data.get('solicitud')
         estatus = data.get('estatus')
-        validador = data.get('validador')
+        #validador = data.get('validador')
         #estatus {Aceptado,Rechazado,Liberado,Suspendido,Pendiente}
         
         solicitudExist=(
