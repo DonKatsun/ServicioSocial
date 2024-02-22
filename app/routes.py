@@ -780,7 +780,6 @@ def AceptarRechazarLiberacion():
             .first()
         )
 
-        solicitudExist.validador = validador
 
         if not solicitudExist:
             return "Solicitud no encontrada",400
@@ -792,7 +791,7 @@ def AceptarRechazarLiberacion():
             return jsonify({"mensaje": f"Solicitud con ID {solicitud_id} suspendida correctamente"}), 200
         
         if estatus != "Aceptado":
-            return jsonify({"mensaje": f"Estatus no valido"}), 200
+            return jsonify({"mensaje": f"Estatus no valido"}), 400
         
         pdf_file = request.files['pdf']
 
