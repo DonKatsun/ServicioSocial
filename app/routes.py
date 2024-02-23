@@ -477,6 +477,17 @@ def consultaLiberaciones():
             .order_by(solicitud.fechaliberacion)
             .limit(limite)
             )
+        elif filtro=='pendiente':
+            solicitudes = (
+            db.session.query(solicitud,alumno,usuarios,estado,tipo)
+            .join(alumno, alumno.id == solicitud.alumno)
+            .join(usuarios, alumno.id == usuarios.id)
+            .join(estado, estado.id == solicitud.estado)
+            .join(tipo, tipo.id == solicitud.tipo)
+            .filter(solicitud.estado == 6)
+            .order_by(solicitud.fechasolicitud)
+            .limit(limite)
+            )
         else:
             return "Error de filtros",400
         
