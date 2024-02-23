@@ -435,55 +435,65 @@ def consultaLiberaciones():
         
         elif filtro=='Liberado':
             solicitudes = (
-            db.session.query(solicitud,alumno,usuarios,estado,tipo)
+            db.session.query(solicitud,alumno,usuarios,estado,tipo,plantel,universidad)
             .join(alumno, alumno.id == solicitud.alumno)
             .join(usuarios, alumno.id == usuarios.id)
             .join(estado, estado.id == solicitud.estado)
             .join(tipo, tipo.id == solicitud.tipo)
+            .join(plantel, alumno.plantel == plantel.id)
+            .join(universidad, plantel.universidad == universidad.id)
             .filter(solicitud.estado == 3)
             .order_by(solicitud.fechasolicitud)
             .limit(limite)
             )
         elif filtro=='Suspendido':
             solicitudes = (
-            db.session.query(solicitud,alumno,usuarios,estado,tipo)
+            db.session.query(solicitud,alumno,usuarios,estado,tipo,plantel,universidad)
             .join(alumno, alumno.id == solicitud.alumno)
             .join(usuarios, alumno.id == usuarios.id)
             .join(estado, estado.id == solicitud.estado)
             .join(tipo, tipo.id == solicitud.tipo)
+            .join(plantel, alumno.plantel == plantel.id)
+            .join(universidad, plantel.universidad == universidad.id)
             .filter(solicitud.estado == 4)
             .order_by(solicitud.fechasolicitud)
             .limit(limite)
             )
         elif filtro=='firma':
             solicitudes = (
-            db.session.query(solicitud,alumno,usuarios,estado,tipo)
+            db.session.query(solicitud,alumno,usuarios,estado,tipo,plantel,universidad)
             .join(alumno, alumno.id == solicitud.alumno)
             .join(usuarios, alumno.id == usuarios.id)
             .join(estado, estado.id == solicitud.estado)
             .join(tipo, tipo.id == solicitud.tipo)
+            .join(plantel, alumno.plantel == plantel.id)
+            .join(universidad, plantel.universidad == universidad.id)
             .filter(or_(solicitud.estado == 4,solicitud.estado == 3),(solicitud.firma == firma))
             .order_by(solicitud.fechaliberacion)
             .limit(limite)
             )
         elif filtro=='alumno':
             solicitudes = (
-            db.session.query(solicitud,alumno,usuarios,estado,tipo)
+            db.session.query(solicitud,alumno,usuarios,estado,tipo,plantel,universidad)
             .join(alumno, alumno.id == solicitud.alumno)
             .join(usuarios, alumno.id == usuarios.id)
             .join(estado, estado.id == solicitud.estado)
             .join(tipo, tipo.id == solicitud.tipo)
+            .join(plantel, alumno.plantel == plantel.id)
+            .join(universidad, plantel.universidad == universidad.id)
             .filter(or_(solicitud.estado == 4,solicitud.estado == 3),(solicitud.alumno == alumno_id))
             .order_by(solicitud.fechaliberacion)
             .limit(limite)
             )
         elif filtro=='pendiente':
             solicitudes = (
-            db.session.query(solicitud,alumno,usuarios,estado,tipo)
+            db.session.query(solicitud,alumno,usuarios,estado,tipo,plantel,universidad)
             .join(alumno, alumno.id == solicitud.alumno)
             .join(usuarios, alumno.id == usuarios.id)
             .join(estado, estado.id == solicitud.estado)
             .join(tipo, tipo.id == solicitud.tipo)
+            .join(plantel, alumno.plantel == plantel.id)
+            .join(universidad, plantel.universidad == universidad.id)
             .filter(solicitud.estado == 6)
             .order_by(solicitud.fechasolicitud)
             .limit(limite)
@@ -501,11 +511,14 @@ def consultaLiberaciones():
             "tipo": str(t.tipo) if t else None,
             "firma": str(s.firma) if s.firma is not None else None,
             "fechaLiberacion": str(s.fechaliberacion) if s.fechaliberacion else None,
+            "fechaSolicitud":s.fechasolicitud,
             "horas": str(s.horas) if s.horas is not None else None,
             "accesoAlumno": s.acceso_alumno,
+            "plantel":p.nombre,
+            "universidad":uni.universidad,
             "pdf": obtener_pdf_base64(s.liberacion) if s.liberacion else None
         }
-        for s, a, u, e, t in resultados
+        for s, a, u, e, t, p, uni in resultados
         ]
 
         return jsonify({"solicitudes": solicitudes_json})
