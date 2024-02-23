@@ -566,8 +566,8 @@ def consultaAlumno():
             "horas": str(s.horas) if s.horas is not None else None,
             "accesoAlumno": s.acceso_alumno if s.acceso_alumno is not None else None,
             "horas_abrobadas": sum if sum is not None else 0,
-            "pdf_liberacion": obtener_pdf_base64(s.liberacion) if s.liberacion is not None else None,
-            "pdf_aceptacion": obtener_pdf_base64(s.carta_aceptacion) if ((s.carta_aceptacion is not None) and s.acceso_alumno) else None
+            "pdf_liberacion": obtener_pdf_base64(s.liberacion) if s.liberacion is not None and s.acceso_alumno else "PDF no disponible",
+            "pdf_aceptacion": obtener_pdf_base64(s.carta_aceptacion) if ((s.carta_aceptacion is not None)) else "PDF no disponible"
         }
         for s, a, u, e, t, sum in resultados
         ]
