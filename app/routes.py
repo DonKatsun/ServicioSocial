@@ -1263,3 +1263,28 @@ def consultaProyectos():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/plantelEditar', methods=['PATCH'])
+def plantelEditar():
+    try:
+        data = request.get_json()
+        nombre_plantel = data.get('plantel')
+        nuevo_nombre = data.get('nuevo_plantel')
+        print(data)
+        if not (nombre_plantel and nuevo_nombre):  return "Error de datos enviados",400
+
+        planteles = (
+            db.session.query(plantel)
+            .filter(plantel.nombre == nombre_plantel)
+            .first()
+        )
+        if planteles is None: return "Plantel no encontrado",400
+        print(planteles.nombre)
+        planteles.nombre = nuevo_nombre
+        #dependencias.secretaria = id_secretaria
+
+        db.session.commit()
+        return "Actualización completada",200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
