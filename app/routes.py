@@ -1042,7 +1042,7 @@ def dependenciaEditar():
         id_dependencia = data.get('dependencia')
         nombre = data.get('nombre')
         id_secretaria = data.get('secretaria')
-        
+        print(data)
         if not id_dependencia:  return "Error de dependencia",400
 
         dependencias = (
