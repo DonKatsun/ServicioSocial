@@ -90,6 +90,7 @@ class solicitud(db.Model):
     carta_aceptacion =db.Column(db.Text)
     acceso_alumno = db.Column(db.Boolean, default=False)
     proyecto = db.Column(db.Integer, db.ForeignKey('proyectos.id'))
+    acceso_aceptacion = db.Column(db.Boolean, default=False)
 
 
 class reporte(db.Model):

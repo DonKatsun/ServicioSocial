@@ -579,8 +579,8 @@ def consultaAlumno():
             "horas": str(s.horas) if s.horas is not None else None,
             "accesoAlumno": s.acceso_alumno if s.acceso_alumno is not None else None,
             "horas_abrobadas": sum if sum is not None else 0,
-            "pdf_liberacion": obtener_pdf_base64(s.liberacion) if s.liberacion is not None else None,
-            "pdf_aceptacion": obtener_pdf_base64(s.carta_aceptacion) if ((s.carta_aceptacion is not None)) else None
+            "pdf_liberacion": obtener_pdf_base64(s.liberacion) if (s.liberacion) and (s.acceso) is not None else None,
+            "pdf_aceptacion": obtener_pdf_base64(s.carta_aceptacion) if ((s.carta_aceptacion is not None) and (s.acceso_aceptacion)) else None
         }
         for s, a, u, e, t, sum in resultados
         ]
@@ -716,6 +716,7 @@ def AceptarRechazarSolicitud():
         #{"solicitud":"1","estatus":"Rechazado","validador":"8"}
         solicitud_id = data.get('solicitud')
         estatus = data.get('estatus')
+        acceso= data.get('ver_pdf', False)
         #validador = data.get('validador')
         #estatus {Aceptado,Rechazado,Liberado,Suspendido,Pendiente}
         
@@ -766,6 +767,7 @@ def AceptarRechazarSolicitud():
 
         solicitudExist.estado = 1
         solicitudExist.carta_aceptacion = file_path
+        solicitudExist.acceso_aceptacion = acceso
         db.session.commit()
 
         return jsonify({"mensaje": f"Solicitud con ID {solicitud_id} aceptada correctamente"}), 200
@@ -789,6 +791,7 @@ def AceptarRechazarLiberacion():
         #{"solicitud":"1","estatus":"Rechazado","validador":"8"}
         solicitud_id = data.get('solicitud')
         estatus = data.get('estatus')
+        acceso= data.get('ver_pdf', False)
         #validador = data.get('validador')
         #estatus {Aceptado,Rechazado,Liberado,Suspendido,Pendiente}
         
@@ -846,6 +849,7 @@ def AceptarRechazarLiberacion():
         solicitudExist.liberacion = file_path
         solicitudExist.fechaliberacion = fecha
         solicitudExist.firma = firma
+        solicitudExist.acceso_alumno =acceso
 
         db.session.commit()
 
@@ -1247,7 +1251,7 @@ def consultaProyectos():
     try:
         get_proyectos = (
             db.session.query(proyectos,dependencia)
-            .join(dependencia,dependencia.id==proyectos.dependencia)
+            .outerjoin(dependencia,dependencia.id==proyectos.dependencia)
         ).all()
         #print(get_proyectos)
         if not get_proyectos:
@@ -1256,8 +1260,8 @@ def consultaProyectos():
         response = [{
             "id": proyecto.id,
             "proyecto": proyecto.nombre_proyecto,
-            "dependencia": dependencia.dependencia,
-            "id_dependencia": dependencia.id,
+            "dependencia": dependencia.dependencia if dependencia else None,
+            "id_dependencia": dependencia.id if dependencia else None,
         } for proyecto, dependencia in get_proyectos]
         return jsonify(response)
 
