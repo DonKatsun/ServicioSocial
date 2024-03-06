@@ -1246,17 +1246,19 @@ def consultaProyectos():
     #id_alumno = request.args.get('alumno')
     try:
         get_proyectos = (
-            db.session.query(proyectos)
+            db.session.query(proyectos,dependencia)
+            .join(dependencia,dependencia.id==proyectos.dependencia)
         ).all()
-        #print(solicitudes)
+        #print(get_proyectos)
         if not get_proyectos:
             return "Ningin proyecto encontrado",400
         
-        response=[{
-            "id":proyectos.id,
-            "proyecto":proyectos.nombre_proyecto
-            }for proyectos in get_proyectos
-            ] 
+        response = [{
+            "id": proyecto.id,
+            "proyecto": proyecto.nombre_proyecto,
+            "dependencia": dependencia.dependencia,
+            "id_dependencia": dependencia.id,
+        } for proyecto, dependencia in get_proyectos]
         return jsonify(response)
 
 

@@ -72,6 +72,7 @@ class proyectos(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre_proyecto = db.Column(db.Text)
     activo = db.Column(db.Boolean)
+    dependencia = db.Column(db.Integer, db.ForeignKey('dependencia.id'))
 
 class solicitud(db.Model):
     id = db.Column(db.Integer, primary_key=True)
