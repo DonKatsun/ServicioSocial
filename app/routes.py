@@ -17,6 +17,7 @@ import string
 from sqlalchemy import exc
 from app.models import *
 import hashlib
+from urllib.parse import quote
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
@@ -517,7 +518,8 @@ def consultaLiberaciones():
             "accesoAlumno": s.acceso_alumno,
             "plantel":p.nombre,
             "universidad":uni.universidad,
-            "pdf": obtener_pdf_base64(s.liberacion) if s.liberacion else None
+            "pdf": obtener_pdf_base64(s.liberacion) if s.liberacion else None,
+            "pdf_liberacion":obtener_pdf_base64(s.liberacion) if s.liberacion else None,
         }
         for s, a, u, e, t, p, uni in resultados
         ]
@@ -1112,7 +1114,7 @@ def generarQr():
             )
     resultados = solicitudes.all()
     datos_qr = '\n'.join([
-        f"https://servicioypracticas.hidalgo.gob.mx/{u.nombre} {u.apellidop} {u.apellidom}/{e.estado}/{t.tipo}/{s.firma}/{s.fechaliberacion}"
+        f"https://servicioypracticas.hidalgo.gob.mx/{quote(u.nombre)}%20{quote(u.apellidop)}%20{quote(u.apellidom)}/{quote(e.estado)}/{quote(t.tipo)}/{quote(s.firma)}/{quote(s.fechaliberacion)}"
         for s, a, u, e, t in resultados
     ])
     #print(resultados[0][0].firma)
