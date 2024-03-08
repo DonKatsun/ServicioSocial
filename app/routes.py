@@ -401,6 +401,7 @@ def consultaSolicitudes():
             "tipo": t.tipo if t else None,
             "fecha":s.fechasolicitud,
             "pdf": obtener_pdf_base64(s.anexo) if s.anexo else None,
+            "pdf_aceptacion": obtener_pdf_base64(s.carta_aceptacion) if s.carta_aceptacion else None,
             
         }
         for s, a, u, e, t, p, uni in resultados
