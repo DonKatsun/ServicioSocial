@@ -1112,7 +1112,7 @@ def generarQr():
             )
     resultados = solicitudes.all()
     datos_qr = '\n'.join([
-        f"http://localhost:3000/{u.nombre} {u.apellidop} {u.apellidom}/{e.estado}/{t.tipo}/{s.firma}/{s.fechaliberacion}"
+        f"https://servicioypracticas.hidalgo.gob.mx/{u.nombre} {u.apellidop} {u.apellidom}/{e.estado}/{t.tipo}/{s.firma}/{s.fechaliberacion}"
         for s, a, u, e, t in resultados
     ])
     #print(resultados[0][0].firma)
