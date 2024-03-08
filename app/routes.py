@@ -1111,7 +1111,7 @@ def generarQr():
             )
     resultados = solicitudes.all()
     datos_qr = '\n'.join([
-        f"{s.id}||{u.nombre} {u.apellidop} {u.apellidom}||\n{e.estado}||{t.tipo}||\n{s.firma}||{s.fechaliberacion}"
+        f"http://localhost:3000/{u.nombre} {u.apellidop} {u.apellidom}/{e.estado}/{t.tipo}/{s.firma}/{s.fechaliberacion}"
         for s, a, u, e, t in resultados
     ])
     #print(resultados[0][0].firma)
@@ -1129,6 +1129,7 @@ def generarQr():
         box_size=10,
         border=4,
     )
+    #url = f"http://localhost:3000/{url_params['nombre']} {url_params['apellidop']} {url_params['apellidom']}/{url_params['estado']}/{url_params['tipo']}/{url_params['firma']}/{url_params['fechaliberacion']}"
     qr.add_data(datos_qr)
     qr.make(fit=True)
 
@@ -1226,7 +1227,7 @@ def idSolicitud():
             .filter(
                 solicitud.alumno == id_alumno, 
                 solicitud.fechaliberacion.is_(None),
-                solicitud.carta_aceptacion.isnot(None),  # Cambiado de not(solicitud.carta_aceptacion.is_(None))
+                solicitud.carta_aceptacion.isnot(None),  
                 solicitud.estado == 1
             )
             .order_by(solicitud.fechasolicitud)
@@ -1294,3 +1295,21 @@ def plantelEditar():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/agregar_dependencia', methods=['GET', 'POST'])
+def agregar_dependencia():
+    try:
+        dependencia_nombre = request.form['dependencia']
+        secretaria_id = request.form['secretaria_id']
+        if not (secretaria_id and dependencia_nombre):
+            return "Error: No se ha enviado los datos",500
+
+        nueva_dependencia = dependencia(dependencia=dependencia_nombre, secretaria_id=secretaria_id)
+        db.session.add(nueva_dependencia)
+        db.session.commit()
+
+        return "Dependencia agregada correctamente",200
+    except Exception as e:
+        db.session.rollback()
+        return "Error: " + str(e),500
+        
