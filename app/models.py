@@ -91,6 +91,7 @@ class solicitud(db.Model):
     acceso_alumno = db.Column(db.Boolean, default=False)
     proyecto = db.Column(db.Integer, db.ForeignKey('proyectos.id'))
     acceso_aceptacion = db.Column(db.Boolean, default=False)
+    sha = db.Column(db.Text)
 
 
 class reporte(db.Model):

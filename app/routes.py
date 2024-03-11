@@ -1,3 +1,4 @@
+from urllib import response
 from flask import render_template, jsonify, request, send_file
 import qrcode
 from app import app
@@ -1114,7 +1115,7 @@ def generarQr():
             )
     resultados = solicitudes.all()
     datos_qr = '\n'.join([
-        f"https://servicioypracticas.hidalgo.gob.mx/{u.nombre} {u.apellidop} {u.apellidom}/{e.estado}/{t.tipo}/{s.firma}/{s.fechaliberacion}"
+        f"https://servicioypracticas.hidalgo.gob.mx/datosQR/{s.sha}"
         for s, a, u, e, t in resultados
     ])
     #print(resultados[0][0].firma)
@@ -1316,3 +1317,40 @@ def agregar_dependencia():
         db.session.rollback()
         return "Error: " + str(e),500
         
+@app.route('/consultaQR', methods=['GET'])
+def consultaQR():
+    try:
+        solicitud_sha = request.form['solicitud']
+
+        solicitud_consulta = (
+            db.session.query(solicitud,alumno,usuarios,estado,tipo)
+            .join(alumno, alumno.id == solicitud.alumno)
+            .join(usuarios, alumno.id == usuarios.id)
+            .join(estado, estado.id == solicitud.estado)
+            .join(tipo, tipo.id == solicitud.tipo)
+            .filter(solicitud.sha == solicitud_sha)
+            .order_by(solicitud.fechasolicitud)
+            .limit(1)
+            ).first()
+        
+        if not solicitud_consulta:
+            return {"respuesta":"No existe la solicitud"},404
+        print(solicitud_consulta)
+        
+        response = [
+        {
+            'nombre': f"{u.nombre} {u.apellidop} {u.apellidom}",
+            'estado': e.estado,
+            'tipo': t.tipo,
+            'fecha_solicitud': s.fechasolicitud,
+            'firma': s.firma if s.firma else "No hay una firma disponible",
+            'fecha_liberacion': s.fechaliberacion if s.fechaliberacion else "N/A",
+        }
+            for s, a, u, e, t in solicitud_consulta
+        ]
+
+        return jsonify(response)
+    
+    except Exception as e:
+        db.session.rollback()
+        return "Error: " + str(e),500

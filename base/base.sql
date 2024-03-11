@@ -99,3 +99,16 @@ CREATE TABLE anexos (
     descripcion TEXT,
     anexo TEXT
 );
+
+CREATE OR REPLACE FUNCTION calcular_sha256()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.sha := encode(digest(CAST(NEW.id AS TEXT), 'sha256'), 'hex');
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER solicitud_calcula_sha256
+BEFORE INSERT ON solicitud
+FOR EACH ROW
+EXECUTE FUNCTION calcular_sha256();
