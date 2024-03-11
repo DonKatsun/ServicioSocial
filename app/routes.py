@@ -1320,8 +1320,10 @@ def agregar_dependencia():
 @app.route('/consultaQR', methods=['GET'])
 def consultaQR():
     try:
-        solicitud_sha = request.form['solicitud']
-
+        #print(request)
+        solicitud_sha = request.args.get('solicitud')
+        #solicitud_sha = request.form['solicitud']
+        #print(solicitud_sha)
         solicitud_consulta = (
             db.session.query(solicitud,alumno,usuarios,estado,tipo)
             .join(alumno, alumno.id == solicitud.alumno)
@@ -1331,11 +1333,11 @@ def consultaQR():
             .filter(solicitud.sha == solicitud_sha)
             .order_by(solicitud.fechasolicitud)
             .limit(1)
-            ).first()
+            ).all()
         
         if not solicitud_consulta:
             return {"respuesta":"No existe la solicitud"},404
-        print(solicitud_consulta)
+        #print(solicitud_consulta)
         
         response = [
         {
@@ -1348,7 +1350,7 @@ def consultaQR():
         }
             for s, a, u, e, t in solicitud_consulta
         ]
-
+        print(response)
         return jsonify(response)
     
     except Exception as e:
