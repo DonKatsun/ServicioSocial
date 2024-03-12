@@ -1305,10 +1305,15 @@ def agregar_dependencia():
     try:
         dependencia_nombre = request.form['dependencia']
         secretaria_id = request.form['secretaria_id']
+        secretarias = (
+            db.session.query(secretaria)
+            .filter(secretaria.secretaria == secretaria_id)
+            .first()
+        )
         if not (secretaria_id and dependencia_nombre):
             return "Error: No se ha enviado los datos",500
 
-        nueva_dependencia = dependencia(dependencia=dependencia_nombre, secretaria_id=secretaria_id)
+        nueva_dependencia = dependencia(dependencia=dependencia_nombre, secretaria_id=secretarias.id)
         db.session.add(nueva_dependencia)
         db.session.commit()
 
@@ -1350,7 +1355,7 @@ def consultaQR():
         }
             for s, a, u, e, t in solicitud_consulta
         ]
-        print(response)
+        #print(response)
         return jsonify(response)
     
     except Exception as e:
