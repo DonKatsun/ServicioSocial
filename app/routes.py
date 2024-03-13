@@ -1303,8 +1303,10 @@ def plantelEditar():
 @app.route('/agregar_dependencia', methods=['GET', 'POST'])
 def agregar_dependencia():
     try:
-        dependencia_nombre = request.form['dependencia']
-        secretaria_id = request.form['secretaria_id']
+        data = request.get_json()
+        dependencia_nombre = data.get('dependencia')
+        print(dependencia_nombre)
+        secretaria_id = data.get('secretaria_id')
         secretarias = (
             db.session.query(secretaria)
             .filter(secretaria.secretaria == secretaria_id)
