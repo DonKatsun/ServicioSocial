@@ -1305,17 +1305,18 @@ def agregar_dependencia():
     try:
         data = request.get_json()
         dependencia_nombre = data.get('dependencia')
-        print(dependencia_nombre)
+        #print(dependencia_nombre)
         secretaria_id = data.get('secretaria_id')
         secretarias = (
             db.session.query(secretaria)
-            .filter(secretaria.secretaria == secretaria_id)
+            .filter(secretaria.id == secretaria_id)
             .first()
         )
         if not (secretaria_id and dependencia_nombre):
             return "Error: No se ha enviado los datos",500
-
-        nueva_dependencia = dependencia(dependencia=dependencia_nombre, secretaria_id=secretarias.id)
+        if not(secretarias):    return "Secretaria no encontrada",400
+        print(secretarias)
+        nueva_dependencia = dependencia(dependencia=dependencia_nombre, secretaria=secretarias.id)
         db.session.add(nueva_dependencia)
         db.session.commit()
 
