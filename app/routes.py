@@ -33,23 +33,28 @@ def login():
     contrasenia_input = data['contrasenia']
     #usuarioAuth = usuarios.query.filter_by(usuario=usuario_input, contrasenia=contrasenia_input).join(rol).first()
     usuarioAuth = (
-        db.session.query(usuarios)
+        db.session.query(usuarios,universidad)
         .filter_by(usuario=usuario_input, contrasenia=contrasenia_input)
         .join(rol, usuarios.rol == rol.id)
+        .join(alumno, usuarios.id == alumno.id)
+        .join(plantel, alumno.plantel == plantel.id)
+        .join(universidad, universidad.id == plantel.universidad)
         .first()
     )
+    print(usuarioAuth)
     if usuarioAuth:
-        rolUsuario = rol.query.filter_by(id=usuarioAuth.rol).first()
+        rolUsuario = rol.query.filter_by(id=usuarioAuth[0].rol).first()
         payload = {
-            'nombre': f"{usuarioAuth.nombre} {usuarioAuth.apellidop} {usuarioAuth.apellidom}",
+            'nombre': f"{usuarioAuth[0].nombre} {usuarioAuth[0].apellidop} {usuarioAuth[0].apellidom}",
             'exp': datetime.utcnow() + timedelta(hours=2),  # Tiempo de expiración del token
             'rol': rolUsuario.rol,
-            'id': usuarioAuth.id,
+            'id': usuarioAuth[0].id,
+            'universidad': usuarioAuth[1].universidad,
         }
         token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
 
         # Incluye el token en la respuesta JSON
-        response = jsonify({'token': token, 'nombre': payload['nombre'],'exp': payload['exp'],'rol': payload['rol'],'id': payload['id']})
+        response = jsonify({'token': token, 'nombre': payload['nombre'],'exp': payload['exp'],'rol': payload['rol'],'id': payload['id'],'universidad': payload['universidad']})
         response.headers.add('Access-Control-Allow-Origin', '*')  # Esto puede ser necesario para que acceda el publico
     else:
         response = "Credenciales incorrectas",400
