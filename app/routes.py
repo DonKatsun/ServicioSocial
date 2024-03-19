@@ -31,25 +31,43 @@ def login():
     # Si la autenticación es exitosa, genera un token JWT con información adicional
     usuario_input = data['usuario']
     contrasenia_input = data['contrasenia']
+    #print(usuario_input, contrasenia_input)
     #usuarioAuth = usuarios.query.filter_by(usuario=usuario_input, contrasenia=contrasenia_input).join(rol).first()
-    usuarioAuth = (
-        db.session.query(usuarios,universidad)
+    user = (
+        db.session.query(usuarios)
         .filter_by(usuario=usuario_input, contrasenia=contrasenia_input)
-        .join(rol, usuarios.rol == rol.id)
-        .join(alumno, usuarios.id == alumno.id)
-        .join(plantel, alumno.plantel == plantel.id)
-        .join(universidad, universidad.id == plantel.universidad)
         .first()
     )
-    print(usuarioAuth)
+    if user.rol == 2:
+        usuarioAuth = (
+            db.session.query(usuarios,universidad)
+            .filter_by(usuario=usuario_input, contrasenia=contrasenia_input)
+            .outerjoin(rol, usuarios.rol == rol.id)
+            .outerjoin(alumno, usuarios.id == alumno.id)
+            .outerjoin(plantel, alumno.plantel == plantel.id)
+            .outerjoin(universidad, universidad.id == plantel.universidad)
+            .first()
+        )
+    else:
+        usuarioAuth = (
+            db.session.query(usuarios)
+            .filter_by(usuario=usuario_input, contrasenia=contrasenia_input)
+            .outerjoin(rol, usuarios.rol == rol.id)
+            .outerjoin(alumno, usuarios.id == alumno.id)
+            .all()
+        )
+
+    #print(usuarioAuth)
     if usuarioAuth:
-        rolUsuario = rol.query.filter_by(id=usuarioAuth[0].rol).first()
+        rolUsuario = rol.query.filter_by(id=user.rol).first()
+        print(rolUsuario)
+        uni= None if rolUsuario.rol != 2 else usuarioAuth[0].universidad
         payload = {
             'nombre': f"{usuarioAuth[0].nombre} {usuarioAuth[0].apellidop} {usuarioAuth[0].apellidom}",
             'exp': datetime.utcnow() + timedelta(hours=2),  # Tiempo de expiración del token
             'rol': rolUsuario.rol,
             'id': usuarioAuth[0].id,
-            'universidad': usuarioAuth[1].universidad,
+            'universidad': uni,
         }
         token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
 
