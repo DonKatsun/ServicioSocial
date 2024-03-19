@@ -57,11 +57,11 @@ def login():
             .all()
         )
 
-    #print(usuarioAuth)
+    print(usuarioAuth)
     if usuarioAuth:
         rolUsuario = rol.query.filter_by(id=user.rol).first()
-        print(rolUsuario)
-        uni= None if rolUsuario.rol != 2 else usuarioAuth[0].universidad
+        #print(rolUsuario.id)
+        uni= None if rolUsuario.id != 2 else usuarioAuth[1].universidad
         payload = {
             'nombre': f"{usuarioAuth[0].nombre} {usuarioAuth[0].apellidop} {usuarioAuth[0].apellidom}",
             'exp': datetime.utcnow() + timedelta(hours=2),  # Tiempo de expiración del token
