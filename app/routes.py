@@ -1208,6 +1208,7 @@ def datosAceptacion():
         if not resultados:  return "Solicitud no encontrada",400
         #print(resultados)
         sol= resultados[0][0]
+        curp = resultados[0][1].curp
         alum = resultados[0][1]
         us = resultados[0][2]
         #proyecto = resultados[0][3]
@@ -1220,7 +1221,7 @@ def datosAceptacion():
             "plantel": plan.nombre,
             "universidad": uni.universidad,
             "matricula":alum.matricula,
-            #"proyecto": proyecto.nombre_proyecto,
+            "curp": curp,
         }
         return jsonify(response)
     
