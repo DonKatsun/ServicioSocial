@@ -40,7 +40,7 @@ def login():
     )
     if user.rol == 2:
         usuarioAuth = (
-            db.session.query(usuarios,universidad)
+            db.session.query(usuarios,universidad,plantel)
             .filter_by(usuario=usuario_input, contrasenia=contrasenia_input)
             .outerjoin(rol, usuarios.rol == rol.id)
             .outerjoin(alumno, usuarios.id == alumno.id)
@@ -57,12 +57,12 @@ def login():
             .all()
         )
 
-    print(usuarioAuth)
+    #print(usuarioAuth)
     if usuarioAuth:
         rolUsuario = rol.query.filter_by(id=user.rol).first()
         #print(rolUsuario.id)
         uni= None if rolUsuario.id != 2 else usuarioAuth[1].universidad
-        plantel = None if rolUsuario.id != 2 else usuarioAuth[1].plantel
+        plantel = None if rolUsuario.id != 2 else usuarioAuth[2].nombre
         payload = {
             'nombre': f"{usuarioAuth[0].nombre} {usuarioAuth[0].apellidop} {usuarioAuth[0].apellidom}",
             'exp': datetime.utcnow() + timedelta(hours=2),  # Tiempo de expiración del token
@@ -74,7 +74,7 @@ def login():
         token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
 
         # Incluye el token en la respuesta JSON
-        response = jsonify({'token': token, 'nombre': payload['nombre'],'exp': payload['exp'],'rol': payload['rol'],'id': payload['id'],'universidad': payload['universidad']})
+        response = jsonify({'token': token, 'nombre': payload['nombre'],'exp': payload['exp'],'rol': payload['rol'],'id': payload['id'],'universidad': payload['universidad'],'plantel': payload['plantel']})
         response.headers.add('Access-Control-Allow-Origin', '*')  # Esto puede ser necesario para que acceda el publico
     else:
         response = "Credenciales incorrectas",400
