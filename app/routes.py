@@ -31,13 +31,17 @@ def login():
     # Si la autenticación es exitosa, genera un token JWT con información adicional
     usuario_input = data['usuario']
     contrasenia_input = data['contrasenia']
-    #print(usuario_input, contrasenia_input)
-    #usuarioAuth = usuarios.query.filter_by(usuario=usuario_input, contrasenia=contrasenia_input).join(rol).first()
+    print(usuario_input, contrasenia_input)
+    #print(usuarioAuth)
     user = (
         db.session.query(usuarios)
         .filter_by(usuario=usuario_input, contrasenia=contrasenia_input)
         .first()
     )
+    print(user)
+    if not user:
+        return jsonify({'error': 'Usuario o contraseña incorrectos'}), 401
+
     if user.rol == 2:
         usuarioAuth = (
             db.session.query(usuarios,universidad,plantel)
@@ -62,19 +66,20 @@ def login():
         rolUsuario = rol.query.filter_by(id=user.rol).first()
         #print(rolUsuario.id)
         uni= None if rolUsuario.id != 2 else usuarioAuth[1].universidad
-        plantel = None if rolUsuario.id != 2 else usuarioAuth[2].nombre
+        plante = None if rolUsuario.id != 2 else usuarioAuth[2].nombre
         payload = {
             'nombre': f"{usuarioAuth[0].nombre} {usuarioAuth[0].apellidop} {usuarioAuth[0].apellidom}",
             'exp': datetime.utcnow() + timedelta(hours=2),  # Tiempo de expiración del token
             'rol': rolUsuario.rol,
             'id': usuarioAuth[0].id,
             'universidad': uni,
-            'plantel': plantel,
+            'plantel': plante,
         }
         token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
 
         # Incluye el token en la respuesta JSON
-        response = jsonify({'token': token, 'nombre': payload['nombre'],'exp': payload['exp'],'rol': payload['rol'],'id': payload['id'],'universidad': payload['universidad'],'plantel': payload['plantel']})
+        response = jsonify({'token': token, 'nombre': payload['nombre'],
+                            'exp': payload['exp'],'rol': payload['rol'],'id': payload['id'],'universidad': payload['universidad'],'plantel': payload['plantel']})
         response.headers.add('Access-Control-Allow-Origin', '*')  # Esto puede ser necesario para que acceda el publico
     else:
         response = "Credenciales incorrectas",400
