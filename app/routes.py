@@ -62,12 +62,14 @@ def login():
         rolUsuario = rol.query.filter_by(id=user.rol).first()
         #print(rolUsuario.id)
         uni= None if rolUsuario.id != 2 else usuarioAuth[1].universidad
+        plantel = None if rolUsuario.id != 2 else usuarioAuth[1].plantel
         payload = {
             'nombre': f"{usuarioAuth[0].nombre} {usuarioAuth[0].apellidop} {usuarioAuth[0].apellidom}",
             'exp': datetime.utcnow() + timedelta(hours=2),  # Tiempo de expiración del token
             'rol': rolUsuario.rol,
             'id': usuarioAuth[0].id,
             'universidad': uni,
+            'plantel': plantel,
         }
         token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
 
