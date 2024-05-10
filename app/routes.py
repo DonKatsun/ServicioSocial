@@ -19,10 +19,27 @@ from sqlalchemy import exc
 from app.models import *
 import hashlib
 from urllib.parse import quote
-
+from functools import wraps
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization')
 
+        if not token:
+            return jsonify({'error': 'Token faltante'}), 401
+
+        try:
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            current_user = data  # Aquí puedes acceder a la información del usuario del token
+        except:
+            return jsonify({'error': 'Token inválido'}), 401
+
+        return f(current_user, *args, **kwargs)
+
+    return decorated
 @app.route('/login', methods=['POST'])
+@token_required
 def login():
     # Lógica de autenticación del usuario
     data = request.get_json()
@@ -91,6 +108,7 @@ def index():
     return "Log in"
 
 @app.route('/registroAlumno', methods=['POST'])
+@token_required
 def registroAlumno():
     data = request.get_json()
     curp_existente = alumno.query.filter_by(curp=data.get('curp')).first()
@@ -150,6 +168,7 @@ def registroAlumno():
     return "Error de formato en los datos recibidos."
 
 @app.route('/registroValidador', methods=['POST'])
+@token_required
 def registroValidador():
     data = request.get_json()
     usuario_existente = usuarios.query.filter_by(usuario=data.get('usuario')).first()
@@ -192,6 +211,7 @@ def registroValidador():
     return 0
 
 @app.route('/subirReporte', methods=['POST'])
+@token_required
 def subirReporte():
     print(request.values)
     try:
@@ -262,6 +282,7 @@ def subirReporte():
         return f"Error: {str(e)}", 500
 
 @app.route('/subirCarta', methods=['POST'])
+@token_required
 def subirCarta():
 
     try:
@@ -332,6 +353,7 @@ def subirCarta():
     
 
 @app.route('/consultaSolicitudes', methods=['GET'])
+@token_required
 def consultaSolicitudes():
     try:
         #FILTRO {todos,Aceptado,Rechazado,Liberado,Suspendido,Pendiente}
@@ -455,6 +477,7 @@ def obtener_pdf_base64(ruta_pdf):
 
 
 @app.route('/consultaLiberaciones', methods=['GET'])
+@token_required
 def consultaLiberaciones():
     try:
         #FILTRO {Liberado,Suspendido, alumno, firma}
@@ -570,6 +593,7 @@ def obtener_pdf_base64(ruta_pdf):
 
 
 @app.route('/consultaAlumno', methods=['GET'])
+@token_required
 def consultaAlumno():
     alumno_id = request.args.get('alumno')
     if not alumno_id:   return "Usuario no enviado",400
@@ -625,6 +649,7 @@ def consultaAlumno():
         return jsonify({"error": str(e)}), 500
     
 @app.route('/consultaReportesAlumno', methods=['GET'])
+@token_required
 def consultaReportesAlumno():
     alumno_id = request.args.get('alumno')
     if not alumno_id:   return "Usuario no enviado",400
@@ -669,6 +694,7 @@ def consultaReportesAlumno():
 
 
 @app.route('/consultaReportesTodos', methods=['GET'])
+@token_required
 def consultaReportesTodos():
     try:
         #{todos, tipo}
@@ -737,6 +763,7 @@ def consultaReportesTodos():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/AceptarRechazarSolicitud', methods=['PATCH'])
+@token_required
 def AceptarRechazarSolicitud():
     try:
         json_data_str = request.values.get('JSON')
@@ -812,6 +839,7 @@ def AceptarRechazarSolicitud():
 
 
 @app.route('/AceptarRechazarLiberacion', methods=['PATCH'])
+@token_required
 def AceptarRechazarLiberacion():
     try:
         json_data_str = request.values.get('JSON')
@@ -895,6 +923,7 @@ def AceptarRechazarLiberacion():
     
 
 @app.route('/AceptarRechazarReporte', methods=['PATCH'])
+@token_required
 def AceptarRechazarReporte():
     try:
         data = request.get_json()
@@ -930,6 +959,7 @@ def AceptarRechazarReporte():
     
 
 @app.route('/alumnoAccedeLiberacion', methods=['PATCH'])
+@token_required
 def alumnoAccedeLiberacion():
     try:
         json_data_str = request.values.get('JSON')
@@ -958,6 +988,7 @@ def alumnoAccedeLiberacion():
         return jsonify({"error": str(e)}), 500
     
 @app.route('/alumnos', methods=['GET'])
+@token_required
 def obtener_alumnos():
     try:
         alumnos = (
@@ -988,6 +1019,7 @@ def obtener_alumnos():
         return str(e), 500
 
 @app.route('/alumnoEditar', methods=['PATCH'])
+@token_required
 def alumnoEditar():
     try:
         data = request.get_json()
@@ -1025,6 +1057,7 @@ def alumnoEditar():
         return jsonify({"error": str(e)}), 500
         
 @app.route('/planteles', methods=['GET'])
+@token_required
 def plantel_get():
     try:
         planteles = (
@@ -1049,6 +1082,7 @@ def plantel_get():
         return str(e), 500
 
 @app.route('/dependencias', methods=['GET'])
+@token_required
 def dependencias_get():
     try:
         dependenciasAll = (
@@ -1074,6 +1108,7 @@ def dependencias_get():
     
 
 @app.route('/dependenciaEditar', methods=['PATCH'])
+@token_required
 def dependenciaEditar():
     try:
         data = request.get_json()
@@ -1101,6 +1136,7 @@ def dependenciaEditar():
     
 
 @app.route('/agregarUniversidadPlantel', methods=['POST'])
+@token_required
 def agregarUniversidadPlantel():
     try:
         data = request.get_json()
@@ -1131,6 +1167,7 @@ def agregarUniversidadPlantel():
         return jsonify({"error": str(e)}), 500
     
 @app.route('/generarQr', methods=['GET'])
+@token_required
 def generarQr():
     solicitud_id = request.args.get('solicitud')
     solicitudes = (
@@ -1191,6 +1228,7 @@ def generarQr():
     return jsonify(response_data)
 
 @app.route('/datosAceptacion', methods=['GET'])
+@token_required
 def datosAceptacion():
     try:
         solicitud_id = request.args.get('solicitud')
@@ -1231,6 +1269,7 @@ def datosAceptacion():
     
 
 @app.route('/solicitarLiberacion', methods=['PATCH'])
+@token_required
 def solicitarLiberacion():
     solicitud_id = request.args.get('solicitud')
     try:
@@ -1254,6 +1293,7 @@ def solicitarLiberacion():
         return jsonify({"error": str(e)}), 500
     
 @app.route('/idSolicitud', methods=['GET'])
+@token_required
 def idSolicitud():
     id_alumno = request.args.get('alumno')
     try:
@@ -1282,6 +1322,7 @@ def idSolicitud():
         return jsonify({"error": str(e)}), 500
     
 @app.route('/consultaProyectos', methods=['GET'])
+@token_required
 def consultaProyectos():
     #id_alumno = request.args.get('alumno')
     try:
@@ -1307,6 +1348,7 @@ def consultaProyectos():
         return jsonify({"error": str(e)}), 500
     
 @app.route('/plantelEditar', methods=['PATCH'])
+@token_required
 def plantelEditar():
     try:
         data = request.get_json()
@@ -1332,6 +1374,7 @@ def plantelEditar():
         return jsonify({"error": str(e)}), 500
     
 @app.route('/agregar_dependencia', methods=['GET', 'POST'])
+@token_required
 def agregar_dependencia():
     try:
         data = request.get_json()
@@ -1357,6 +1400,7 @@ def agregar_dependencia():
         return "Error: " + str(e),500
         
 @app.route('/consultaQR', methods=['GET'])
+@token_required
 def consultaQR():
     try:
         #print(request)
