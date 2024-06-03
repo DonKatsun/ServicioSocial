@@ -39,7 +39,6 @@ def token_required(f):
 
     return decorated
 @app.route('/login', methods=['POST'])
-@token_required
 def login():
     # Lógica de autenticación del usuario
     data = request.get_json()
